@@ -1,0 +1,29 @@
+{
+  "name": "@microservices/utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for microservices",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=__tests__/unit",
+    "lint": "eslint src/ __tests__/",
+    "lint:fix": "eslint src/ __tests__/ --fix",
+    "build": "echo 'Build completed for shared utils'",
+    "clean": "rm -rf node_modules dist coverage"
+  },
+  "dependencies": {
+    "joi": "^17.12.2",
+    "winston": "^3.12.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.12"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "testMatch": ["**/__tests__/**/*.test.js"]
+  }
+}

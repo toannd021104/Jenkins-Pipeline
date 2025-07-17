@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "3001:3001"
+    container_name: user-service
+    networks:
+      - microservices-network
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "3002:3002"
+    container_name: order-service
+    networks:
+      - microservices-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    container_name: frontend
+    networks:
+      - microservices-network
+networks:
+- microservices-network:
+    driver: bridge
