@@ -1,6 +1,18 @@
 # DevOps Microservices Pipeline
 
-A comprehensive DevOps pipeline showcasing modern microservices architecture with containerization, orchestration, and automated deployment strategies. This project demonstrates production-ready practices for building, testing, and deploying distributed applications.
+This project uses Jenkins to automatically build and deploy a microservices application. Each service is packaged with Docker, orchestrated with Kubernetes, and updated automatically whenever code changes. The process is fully automated with custom scripts for building, security scanning, pushing, and deploying services, ensuring faster and more reliable development, testing, and deployment.
+
+## Pipeline
+<p align="center">
+  <img src="https://i.postimg.cc/zBVc3t0Z/a.png" alt="App Diagram"/>
+</p>
+
+## Deploy Result
+<p align="center">
+  <img src="https://i.postimg.cc/SRbfqDPG/b.png" alt="App Diagram"/>
+</p>
+
+
 
 ## 🏗️ Project Architecture
 
@@ -162,3 +174,4 @@ A comprehensive DevOps pipeline showcasing modern microservices architecture wit
 - Performance monitoring
 
 </details>
+
