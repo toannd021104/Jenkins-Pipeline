@@ -3,10 +3,16 @@ pipeline {
         label 'local'
     }
     
+    // ✅ FIX 1: Thêm triggers để auto-start với webhook
+    triggers {
+        githubPush()
+        pollSCM('H/5 * * * *')
+    }
+        
     environment {
         COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         REGISTRY = 'docker.io'
-        USERNAME = 'toanndcloud' // Thay bằng Docker Hub username của bạn
+        USERNAME = 'toanndcloud'
     }
     
     stages {
@@ -22,7 +28,6 @@ pipeline {
             steps {
                 echo '📦 Cài đặt dependencies...'
                 script {
-                    // Chỉ cài dependencies nếu có package.json
                     if (fileExists('services/user-service/package.json')) {
                         sh 'cd services/user-service && npm install || echo "⚠️ User service npm install failed"'
                     }
@@ -42,7 +47,6 @@ pipeline {
             steps {
                 echo '🧪 Chạy tests...'
                 script {
-                    // Test từng service nếu có
                     if (fileExists('services/user-service/package.json')) {
                         sh 'cd services/user-service && npm test || echo "⚠️ User service tests failed"'
                     }
@@ -62,25 +66,40 @@ pipeline {
             steps {
                 echo '🐳 Kiểm tra thay đổi và build images...'
                 script {
-                    // Kiểm tra files nào thay đổi
-                    def changes = sh(
-                        script: 'git diff --name-only HEAD~1 HEAD || echo "all"',
-                        returnStdout: true
-                    ).trim()
+
+                    def changes = "all"
+                    try {
+                        def commitCount = sh(
+                            script: 'git rev-list --count HEAD 2>/dev/null || echo "1"',
+                            returnStdout: true
+                        ).trim().toInteger()
+                        
+                        if (commitCount > 1) {
+                            changes = sh(
+                                script: 'git diff --name-only HEAD~1 HEAD',
+                                returnStdout: true
+                            ).trim()
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ Git diff failed, building all"
+                        changes = "all"
+                    }
                     
                     echo "📋 Files changed: ${changes}"
                     
-                    // Build tất cả nếu là lần đầu hoặc có thay đổi script
                     if (changes.contains('scripts/') || changes == 'all' || env.BUILD_NUMBER == '1') {
                         echo '🔄 Building all services...'
                         sh './scripts/build-images.sh ${USERNAME}'
+                        env.IMAGES_BUILT = 'true'
                     } else {
-                        // Build từng service nếu có thay đổi
-                        if (changes.contains('services/user-service/') || changes.contains('frontend/')) {
+                  
+                        if (changes.contains('services/') || changes.contains('frontend/')) {
                             echo '🔄 Changes detected, building all services...'
                             sh './scripts/build-images.sh ${USERNAME}'
+                            env.IMAGES_BUILT = 'true'
                         } else {
                             echo '⚠️ No service changes detected, skipping build'
+                            env.IMAGES_BUILT = 'false'
                         }
                     }
                 }
@@ -88,10 +107,12 @@ pipeline {
         }
         
         stage('🔒 Security Scan') {
+            when {
+                expression { env.IMAGES_BUILT == 'true' }
+            }
             steps {
                 echo '🔒 Quét bảo mật images...'
                 script {
-                    // Chỉ scan nếu có Trivy
                     sh '''
                         if command -v trivy >/dev/null 2>&1; then
                             ./scripts/scan-images.sh || echo "⚠️ Security scan failed but continuing..."
@@ -105,29 +126,29 @@ pipeline {
         
         stage('📤 Push Images') {
             when {
-                expression {
-                    env.GIT_BRANCH == 'origin/master'
+                allOf {
+                    expression { env.GIT_BRANCH == 'origin/master' }
+                    expression { env.IMAGES_BUILT == 'true' }  
                 }
             }
             steps {
                 echo '📤 Push images lên registry...'
                 script {
-                    // Chỉ push khi ở main branch
-                    sh './scripts/push-images.sh ${VERSION} ${REGISTRY} ${USERNAME} || echo "⚠️ Push failed"'
+                    sh './scripts/push-images.sh ${REGISTRY} ${USERNAME} || echo "⚠️ Push failed"'
                 }
             }
         }
         
         stage('🚀 Deploy to Kubernetes') {
             when {
-                expression {
-                    env.GIT_BRANCH == 'origin/master'
+                allOf {
+                    expression { env.GIT_BRANCH == 'origin/master' }
+                    expression { env.IMAGES_BUILT == 'true' } 
                 }
             }
             steps {
                 echo '🚀 Deploy lên Kubernetes...'
                 script {
-                    // Chỉ deploy khi có kubectl
                     sh '''
                         if command -v kubectl >/dev/null 2>&1; then
                             ./scripts/deploy-k8s.sh || echo "⚠️ Deploy failed"
@@ -147,7 +168,7 @@ pipeline {
         }
         success {
             echo '🎉 Pipeline hoàn thành thành công!'
-            sh 'docker images | grep microservices || echo "No images found"'
+            sh "docker images | grep ${env.USERNAME} || echo 'No images found'"
         }
         failure {
             echo '❌ Pipeline thất bại!'
