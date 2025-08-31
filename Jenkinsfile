@@ -2,12 +2,6 @@ pipeline {
     agent {
         label 'local'
     }
-    
-    // ✅ FIX 1: Thêm triggers để auto-start với webhook
-    triggers {
-        githubPush()
-        pollSCM('H/5 * * * *')
-    }
         
     environment {
         COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
