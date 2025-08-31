@@ -4,7 +4,7 @@ pipeline {
     }
     
     environment {
-        VERSION = "${BUILD_NUMBER}"
+        COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         REGISTRY = 'docker.io'
         USERNAME = 'toanndcloud' // Thay bằng Docker Hub username của bạn
     }
@@ -73,12 +73,12 @@ pipeline {
                     // Build tất cả nếu là lần đầu hoặc có thay đổi script
                     if (changes.contains('scripts/') || changes == 'all' || env.BUILD_NUMBER == '1') {
                         echo '🔄 Building all services...'
-                        sh './scripts/build-images.sh ${VERSION}'
+                        sh './scripts/build-images.sh ${USERNAME}'
                     } else {
                         // Build từng service nếu có thay đổi
                         if (changes.contains('services/user-service/') || changes.contains('frontend/')) {
                             echo '🔄 Changes detected, building all services...'
-                            sh './scripts/build-images.sh ${VERSION}'
+                            sh './scripts/build-images.sh ${USERNAME}'
                         } else {
                             echo '⚠️ No service changes detected, skipping build'
                         }

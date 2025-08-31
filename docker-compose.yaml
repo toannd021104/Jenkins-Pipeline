@@ -25,5 +25,5 @@ services:
     networks:
       - microservices-network
 networks:
-- microservices-network:
+ microservices-network:
     driver: bridge

@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: user-service                     # Tên container
-          image: microservices/user-service:latest  # Image từ registry
+          image: toanndcloud/user-service:latest  # Image từ registry
           imagePullPolicy: IfNotPresent          # Kéo image nếu chưa có sẵn
 
           ports:

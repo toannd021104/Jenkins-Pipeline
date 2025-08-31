@@ -1,0 +1,76 @@
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: local-storage
+          resources:
+            requests:
+              storage: 10Gi
+    
+    # Resource limits
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "200m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    
+    # Retention policy
+    retention: 30d
+    retentionSize: 8GB
+
+# Grafana configuration
+grafana:
+  # Enable persistence
+  persistence:
+    enabled: true
+    storageClassName: local-storage
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
+  
+  # Admin credentials
+  adminPassword: admin123
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "300m"
+  
+  # Service configuration
+  service:
+    type: NodePort
+    nodePort: 30300
+
+# AlertManager configuration
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: local-storage
+          resources:
+            requests:
+              storage: 2Gi
+
+# Node Exporter - collect node metrics
+nodeExporter:
+  enabled: true
+
+# Kube State Metrics - collect k8s object metrics
+kubeStateMetrics:
+  enabled: true
+
+# Prometheus Operator
+prometheusOperator:
+  enabled: true

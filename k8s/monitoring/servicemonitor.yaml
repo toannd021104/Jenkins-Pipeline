@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: microservices-monitor
+  namespace: monitoring
+  labels:
+    app: microservices
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  namespaceSelector:
+    matchNames:
+    - microservices
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: order-service-monitor
+  namespace: monitoring
+  labels:
+    app: microservices
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: order-service
+  namespaceSelector:
+    matchNames:
+    - microservices
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: frontend-monitor
+  namespace: monitoring
+  labels:
+    app: microservices
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  namespaceSelector:
+    matchNames:
+    - microservices
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s

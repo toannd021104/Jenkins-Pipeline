@@ -1,6 +1,6 @@
 #!/bin/bash
-#  ex: ./scripts/push-images.sh <latest> <docker.io> <toanndcloud>
-
+# Usage: ./scripts/push-images.sh [registry] [username]
+# Example: ./scripts/push-images.sh docker.io toanndcloud
 
 set -e
 
@@ -8,28 +8,36 @@ echo "🚀 Docker Image Push Script"
 echo "==========================="
 
 # Get parameters
-VERSION=${1:-"latest"} # Default to "latest" if not provided
-REGISTRY=${2:-"docker.io"} # Default to "docker.io" if not provided
-USERNAME=${3}
+REGISTRY=${1:-"docker.io"}
+USERNAME=${2}
 
-# Show example 
+# Get commit hash
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Show usage if username missing
 if [ -z "$USERNAME" ]; then
     echo "❌ Error: Username is required"
     echo ""
-    echo "Usage: $0 <version> [registry] <username>"
+    echo "Usage: $0 [registry] <username>"
     echo ""
     echo "Examples:"
-    echo "  $0 v1.0.0 docker.io myusername"
-    echo "  $0 latest docker.io myusername"
-    echo "  $0 v1.2.0 ghcr.io myusername"
+    echo "  $0 docker.io myusername"
+    echo "  $0 ghcr.io myusername"
+    echo "  $0 myusername              # defaults to docker.io"
     echo ""
     exit 1
 fi
 
+# If only one parameter, assume it's username and use docker.io
+if [ $# -eq 1 ]; then
+    USERNAME=$1
+    REGISTRY="docker.io"
+fi
+
 echo "Push configuration:"
-echo "Version: $VERSION"
 echo "Registry: $REGISTRY"
 echo "Username: $USERNAME"
+echo "Commit Hash: $COMMIT_HASH"
 echo ""
 
 # Check Docker login
@@ -48,44 +56,35 @@ check_docker_login() {
 
 # Function to push service
 push_service() {
-    local service_name=$1 #Bien cuc bo = Tham so dau tien truyen vao ham
-    local local_image="microservices/$service_name"
+    local service_name=$1
+    local local_image="$USERNAME/$service_name"
     local remote_image="$REGISTRY/$USERNAME/$service_name"
     
     echo "📦 Processing $service_name..."
     
-    # Check if local image exists
-    if ! docker image inspect "$local_image:$VERSION" > /dev/null 2>&1; then
-        echo "❌ Local image $local_image:$VERSION not found"
-        echo "   Run: ./scripts/build-images.sh $VERSION"
+    # Check if local latest image exists
+    if ! docker image inspect "$local_image:latest" > /dev/null 2>&1; then
+        echo "❌ Local image $local_image:latest not found"
+        echo "   Run: ./scripts/build-images.sh"
         return 1
     fi
     
     echo "🏷️  Tagging images..."
     
-    # Tag for image local
-    docker tag "$local_image:$VERSION" "$remote_image:$VERSION"
+    # Tag latest for remote
     docker tag "$local_image:latest" "$remote_image:latest"
     
-    # Try to get commit hash tag and tag for image
-    if docker image inspect "$local_image" --format '{{.RepoTags}}' | grep -q "microservices/$service_name:" | grep -v ":latest\|:$VERSION"; then
-        local commit_tags=$(docker image inspect "$local_image" --format '{{.RepoTags}}' | grep -o "microservices/$service_name:[a-f0-9]\{7\}" | head -1)
-        if [ ! -z "$commit_tags" ]; then
-            local commit_hash=$(echo $commit_tags | cut -d':' -f2)
-            docker tag "$local_image:$commit_hash" "$remote_image:$commit_hash"
-        fi
+    # Check and tag commit hash if exists
+    if docker image inspect "$local_image:$COMMIT_HASH" > /dev/null 2>&1; then
+        echo "   Found commit hash tag: $COMMIT_HASH"
+        docker tag "$local_image:$COMMIT_HASH" "$remote_image:$COMMIT_HASH"
+        HAS_COMMIT_TAG=true
+    else
+        echo "   No commit hash tag found (this is okay)"
+        HAS_COMMIT_TAG=false
     fi
     
     echo "🚀 Pushing to registry..."
-    
-    # Push version tag
-    echo "   Pushing $remote_image:$VERSION..."
-    if docker push "$remote_image:$VERSION"; then
-        echo "   ✅ Version tag pushed"
-    else
-        echo "   ❌ Failed to push version tag"
-        return 1
-    fi
     
     # Push latest tag
     echo "   Pushing $remote_image:latest..."
@@ -97,10 +96,10 @@ push_service() {
     fi
     
     # Push commit hash if exists
-    if [ ! -z "$commit_hash" ]; then
-        echo "   Pushing $remote_image:$commit_hash..."
-        if docker push "$remote_image:$commit_hash"; then
-            echo "   ✅ Commit tag pushed"
+    if [ "$HAS_COMMIT_TAG" = true ]; then
+        echo "   Pushing $remote_image:$COMMIT_HASH..."
+        if docker push "$remote_image:$COMMIT_HASH"; then
+            echo "   ✅ Commit tag ($COMMIT_HASH) pushed"
         else
             echo "   ⚠️  Failed to push commit tag (non-critical)"
         fi
@@ -146,8 +145,14 @@ if [ $FAILED_SERVICES -gt 0 ]; then
 else
     echo "🎉 All services pushed successfully!"
     echo ""
-    echo "Images available at:"
+    echo "🌍 Images available at:"
     for service in "${SERVICES[@]}"; do
-        echo "  - $REGISTRY/$USERNAME/$service:$VERSION"
+        echo "  - $REGISTRY/$USERNAME/$service:latest"
+        if [ "$COMMIT_HASH" != "unknown" ]; then
+            echo "  - $REGISTRY/$USERNAME/$service:$COMMIT_HASH"
+        fi
     done
+    echo ""
+    echo "💡 To use in Kubernetes:"
+    echo "   image: $REGISTRY/$USERNAME/frontend:latest"
 fi
