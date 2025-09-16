@@ -13,7 +13,7 @@ Design and implement a **pipeline as code** (Jenkinsfile) that:
 - Performs **security scanning** for images
 - Tags and pushes images to a registry
 - Deploys to **Kubernetes** with health checks, load balancing, and **HPA**
-- Triggers automatically on code changes and only rebuilds what changed :contentReference[oaicite:2]{index=2}
+- Triggers automatically on code changes and only rebuilds what changed :contentReference.
 
 ### Action
 - **Pipeline as Code (Jenkinsfile)** with multi-stage flow: *checkout → install → test → build → scan → push → deploy*, plus branch policy (deploy from `master`).  
@@ -202,5 +202,6 @@ Design and implement a **pipeline as code** (Jenkinsfile) that:
 - Performance monitoring
 
 </details>
+
 
 
