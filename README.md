@@ -1,6 +1,34 @@
-# DevOps Microservices Pipeline
+# Jenkins Microservices Pipeline
 
-This project uses Jenkins to automatically build and deploy a microservices application. Each service is packaged with Docker, orchestrated with Kubernetes, and updated automatically whenever code changes. The process is fully automated with custom scripts for building, security scanning, pushing, and deploying services, ensuring faster and more reliable development, testing, and deployment.
+> This project uses Jenkins to automatically build and deploy a microservices application. Each service is packaged with Docker, orchestrated with Kubernetes, and updated automatically whenever code changes. The process is fully automated with custom scripts for building, security scanning, pushing, and deploying services, ensuring faster and more reliable development, testing, and deployment.
+
+---
+
+### Situation
+Multiple microservices (Node.js backends + React frontend) must be built, tested, scanned, versioned, containerized, and deployed to Kubernetes reliably whenever code changes. Manual steps are time-consuming and error-prone. :contentReference[oaicite:1]{index=1}
+
+### Task
+Design and implement a **pipeline as code** (Jenkinsfile) that:
+- Builds and tests all services in parallel where possible
+- Performs **security scanning** for images
+- Tags and pushes images to a registry
+- Deploys to **Kubernetes** with health checks, load balancing, and **HPA**
+- Triggers automatically on code changes and only rebuilds what changed :contentReference[oaicite:2]{index=2}
+
+### Action
+- **Pipeline as Code (Jenkinsfile)** with multi-stage flow: *checkout → install → test → build → scan → push → deploy*, plus branch policy (deploy from `master`).  
+- **Docker**: multi-stage Dockerfiles, non-root user, healthcheck; registry tagging with semantic version + Git SHA.  
+- **Security**: integrate **Trivy** to block critical vulnerabilities.  
+- **Kubernetes**: manifests for Deployments/Services/ConfigMaps, probes, load balancing, and **Horizontal Pod Autoscaler**.  
+- **Automation scripts** in `/scripts` to standardize build/push/deploy routines.  
+
+### Result
+- **One-click CI/CD** from commit to Kubernetes deployment.  
+- **Faster feedback loops** via parallel testing and smart rebuilds.  
+- **Higher reliability & security** with automated tests and image scanning.  
+- **Scalability** through HPA and multi-replica configs.
+
+---
 
 ## Pipeline
 <p align="center">
@@ -174,4 +202,5 @@ This project uses Jenkins to automatically build and deploy a microservices appl
 - Performance monitoring
 
 </details>
+
 
