@@ -5,7 +5,7 @@
 ---
 
 ### Situation
-Multiple microservices (Node.js backends + React frontend) must be built, tested, scanned, versioned, containerized, and deployed to Kubernetes reliably whenever code changes. Manual steps are time-consuming and error-prone. :contentReference[oaicite:1]{index=1}
+Multiple microservices (Node.js backends + React frontend) must be built, tested, scanned, versioned, containerized, and deployed to Kubernetes reliably whenever code changes. Manual steps are time-consuming and error-prone.
 
 ### Task
 Design and implement a **pipeline as code** (Jenkinsfile) that:
@@ -13,7 +13,7 @@ Design and implement a **pipeline as code** (Jenkinsfile) that:
 - Performs **security scanning** for images
 - Tags and pushes images to a registry
 - Deploys to **Kubernetes** with health checks, load balancing, and **HPA**
-- Triggers automatically on code changes and only rebuilds what changed :contentReference.
+- Triggers automatically on code changes and only rebuilds what changed.
 
 ### Action
 - **Pipeline as Code (Jenkinsfile)** with multi-stage flow: *checkout → install → test → build → scan → push → deploy*, plus branch policy (deploy from `master`).  
